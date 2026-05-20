@@ -48,11 +48,6 @@ endif()
 #     add_link_options(-static)
 # endif()
 
-# Provide a hint for GTest if on Windows/MSYS2
-if(WIN32)
-    set(GTEST_ROOT "C:/msys64/mingw64" CACHE PATH "Path to GTest installation")
-endif()
-
 find_package(GTest REQUIRED)
 find_package(Threads REQUIRED)
 
@@ -71,10 +66,7 @@ foreach(SOURCE_FILE ${TEST_SOURCES})
     add_executable(${TARGET_NAME} ${SOURCE_FILE})
     
     target_include_directories(${TARGET_NAME} PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/FiniteES
-        ${CMAKE_CURRENT_SOURCE_DIR}/InfiniteES
-        ${CMAKE_CURRENT_SOURCE_DIR}/Conversion
+        ${CMAKE_CURRENT_SOURCE_DIR}/Include
         ${GTEST_INCLUDE_DIRS}
     )
 
