@@ -1,0 +1,119 @@
+#pragma once
+
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+#include <functional>
+#include "EveHorizonConcepts.h"
+
+/**
+ * PrimeKahnTracker is a state tracker used for Kahn's algorithm of generating traces specific to Prime Event Structures, which have a simple enabling condition based on immediate causal predecessors and symmetric conflicts. In a Prime ES, an event is enabled if all of its immediate causal predecessors have fired and none of its conflicting events have fired.
+ * The PrimeKahnTracker maintains the state of which events have fired, how many immediate predecessors of each event have not yet fired (using an in-degree counter), and how many conflicts are currently active for each event. This allows it to efficiently determine which events are currently enabled and to update the state when events are fired or retracted.
+ * The tracker can be used to explore traces of a sub-set of events (say a configuration), or the whole set of events, as it dynamically queries the predecessors and conflicts for the relevant events.
+ * When the conflict relation passed is asymmetric conflict, the tracker can be used for Asymmetric ESs as well, where events can disable others.
+ */
+template <std::ranges::input_range EventSet, typename ConflictGetter>
+    requires EventRangeGetter<ConflictGetter, std::ranges::range_value_t<EventSet>>
+class PrimeKahnDFSTracker
+{
+
+    using Event = std::ranges::range_value_t<EventSet>;
+
+    struct NodeState
+    {
+        std::size_t in_degree = 0;      // Decremented when a predecessor fires
+        std::size_t conflict_count = 0; // Incremented when a conflicting event fires
+        bool fired = false;
+
+        // Forward links are still pre-calculated to maintain the O(1) push pattern
+        std::vector<Event> successors;
+    };
+
+    std::unordered_map<Event, NodeState> registry;
+    ConflictGetter get_conflicts;
+
+public:
+    /**
+     * @param scope The specific subset of events we want to track (e.g. candidateSet)
+     * @param get_predecessors Func: Event -> Range of its immediate causal predecessors
+     * @param get_conf_func Func: Event -> Range of its symmetric conflicts
+     */
+    PrimeKahnDFSTracker(
+        const EventSet &scope,
+        auto &&get_predecessors,
+        ConflictGetter get_conf_func) : get_conflicts(get_conf_func)
+    {
+        // Invert the backward causality to build forward link successions
+        for (const auto &n : scope)
+        {
+            registry[n] = NodeState{};
+            for (const auto &pred : get_predecessors(n))
+            {
+                registry[pred].successors.push_back(n); // Build forward link
+                registry[n].in_degree++;                // Set up Kahn counter
+            }
+        }
+    }
+
+    // O(1) Enablement Check
+    bool is_enabled(const Event &e) const
+    {
+        auto it = registry.find(e);
+        if (it == registry.end())
+        {
+            return false;
+        }
+        const auto &state = it->second;
+        return !state.fired && state.in_degree == 0 && state.conflict_count == 0;
+    }
+
+    // Incremental Kahn Step: Dynamically loops through functor conflicts
+    void push(const Event &n)
+    {
+        auto &state = registry[n];
+        state.fired = true;
+
+        for (const auto &succ : state.successors)
+        {
+            registry[succ].in_degree--;
+        }
+
+        // On-the-fly conflict iteration
+        for (const auto &conf : get_conflicts(n))
+        {
+            if (registry.contains(conf))
+            {
+                registry[conf].conflict_count++;
+            }
+        }
+    }
+
+    // Symmetrical Backtracking step: Dynamically loops through functor conflicts
+    void pop(const Event &n)
+    {
+        auto &state = registry[n];
+
+        for (const auto &conf : get_conflicts(n))
+        {
+            if (registry.contains(conf))
+            {
+                registry[conf].conflict_count--;
+            }
+        }
+
+        for (const auto &succ : state.successors)
+        {
+            registry[succ].in_degree++;
+        }
+        state.fired = false;
+    }
+};
+
+template <class PredecessorGetter, class ConflictGetter>
+auto getPrimeKahnDFSTrackerFactory(PredecessorGetter get_preds, ConflictGetter get_confs)
+{
+    return [get_preds, get_confs](const auto &events)
+    {
+        return PrimeKahnDFSTracker(events, get_preds, get_confs); // Do not move, as this might be multiple times for the same factory with different node sets.
+    };
+}

@@ -3,31 +3,40 @@
 #include <vector>
 #include <algorithm>
 #include <cassert>
-#include "FiniteES/BundleKhanTracker.h"
-#include "FiniteES/TraceChecker.h"
+#include "FiniteES/BundleKahnDFSTracker.h"
+#include "TraceChecker.h"
 
-TEST(BundleTraceExplorerTest, ProducesExpectedBundleTraces) {
-    std::vector<std::string> events = {"e1","e2","e3","e4"};
+TEST(BundleTraceExplorerTest, ProducesExpectedBundleTraces)
+{
+    std::vector<std::string> events = {"e1", "e2", "e3", "e4"};
 
-    auto get_bundles = [](const std::string& n) -> std::vector<std::vector<std::string>> {
-        if (n == "e4") {
+    auto get_bundles = [](const std::string &n) -> std::vector<std::vector<std::string>>
+    {
+        if (n == "e4")
+        {
             return {
                 {"e1", "e2"},
-                {"e3", "e2"}
-            };
+                {"e3", "e2"}};
         }
         return {};
     };
 
-    auto get_conflicts = [](const std::string& n) -> std::vector<std::string> {
-        if (n == "e1") return {"e2"};
-        if (n == "e2") return {"e1", "e3"};
-        if (n == "e3") return {"e2"};
+    auto get_conflicts = [](const std::string &n) -> std::vector<std::string>
+    {
+        if (n == "e1")
+            return {"e2"};
+        if (n == "e2")
+            return {"e1", "e3"};
+        if (n == "e3")
+            return {"e2"};
         return {};
     };
 
     auto expected = std::vector<std::vector<std::string>>{
-        {}, {"e1"}, {"e3"}, {"e2"},
+        {},
+        {"e1"},
+        {"e3"},
+        {"e2"},
         {"e1", "e3"},
         {"e3", "e1"},
         {"e2", "e4"},
@@ -35,9 +44,10 @@ TEST(BundleTraceExplorerTest, ProducesExpectedBundleTraces) {
         {"e3", "e1", "e4"},
     };
 
-    auto trackerFactory = getBundleKhanTrackerFactory(get_bundles, get_conflicts);
+    auto trackerFactory = getBundleKahnDFSTrackerFactory(get_bundles, get_conflicts);
 
-    for(auto & trace : expected) {
+    for (auto &trace : expected)
+    {
         EXPECT_TRUE(isTrace(trace, trackerFactory)) << "Trace failed validation: " << testing::PrintToString(trace);
     }
 
@@ -49,27 +59,36 @@ TEST(BundleTraceExplorerTest, ProducesExpectedBundleTraces) {
     EXPECT_EQ(isTrace(std::vector<std::string>({"e1", "e1"}), trackerFactory).first_invalid_event(), "e1") << "Invalid trace passed validation";
 }
 
-TEST(ExtendedBundleTraceExplorerTest, ProducesExpectedExtendedBundleTraces) {
-    std::vector<std::string> events = {"e1","e2","e3","e4"};
+TEST(ExtendedBundleTraceExplorerTest, ProducesExpectedExtendedBundleTraces)
+{
+    std::vector<std::string> events = {"e1", "e2", "e3", "e4"};
 
-    auto get_bundles = [](const std::string& n) -> std::vector<std::vector<std::string>> {
-        if (n == "e4") {
+    auto get_bundles = [](const std::string &n) -> std::vector<std::vector<std::string>>
+    {
+        if (n == "e4")
+        {
             return {
-                {"e1", "e2"}
-            };
+                {"e1", "e2"}};
         }
         return {};
     };
 
-    auto get_inhibited_by = [](const std::string& n) -> std::vector<std::string> {
-        if (n == "e1") return {"e2"};
-        if (n == "e2") return {"e1"};
-        if (n == "e3") return {"e1"};
+    auto get_inhibited_by = [](const std::string &n) -> std::vector<std::string>
+    {
+        if (n == "e1")
+            return {"e2"};
+        if (n == "e2")
+            return {"e1"};
+        if (n == "e3")
+            return {"e1"};
         return {};
     };
 
     auto expected = std::vector<std::vector<std::string>>{
-        {}, {"e1"}, {"e3"}, {"e2"},
+        {},
+        {"e1"},
+        {"e3"},
+        {"e2"},
         {"e1", "e3"}, //{"e3", "e1"}, not valid because e3 inhibits e1
         {"e2", "e3"},
         {"e3", "e2"},
@@ -82,9 +101,10 @@ TEST(ExtendedBundleTraceExplorerTest, ProducesExpectedExtendedBundleTraces) {
         {"e3", "e2", "e4"},
     };
 
-    auto trackerFactory = getBundleKhanTrackerFactory(get_bundles, get_inhibited_by);
+    auto trackerFactory = getBundleKahnDFSTrackerFactory(get_bundles, get_inhibited_by);
 
-    for(auto & trace : expected) {
+    for (auto &trace : expected)
+    {
         EXPECT_TRUE(isTrace(trace, trackerFactory)) << "Trace failed validation: " << testing::PrintToString(trace);
     }
 
