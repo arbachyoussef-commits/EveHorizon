@@ -1,8 +1,9 @@
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 #include <vector>
 #include <string>
 #include <algorithm>
-#include "Conversion/Conversion.h"
+#include "Conversion.h"
 
 // Define a simple Node type for testing
 struct Node {
@@ -361,4 +362,39 @@ TEST_F(ConversionIntegrationTest, PrimeToBundleConversion) {
     
     std::vector<std::array<Node, 1>> bundles(result.begin(), result.end());
     EXPECT_EQ(bundles.size(), 2u);
+}
+
+// Test 1: The 4-Event Masking Diamond we verified mathematically
+TEST(FlowToStableConversionTest, FourEventMaskingDiamond) {
+    //auto all_nodes = {"A", "B", "C", "D", "E"};
+    auto get_flow_preds = [](const std::string& n) -> std::vector<std::string> {
+        if (n == "E") return {"A", "B", "C", "D"};
+        return {};
+    };
+    auto get_conflicts = [](const std::string& n) -> std::vector<std::string> {
+        if (n == "A") return {"B"};
+        if (n == "B") return {"A", "C"};
+        if (n == "C") return {"B"};
+        return {};
+    };
+    // diamond_system.get_successors = [](const std::string& n) -> std::vector<std::string> {
+    //     if (n == "A" || n == "B" || n == "C" || n == "D") return {"E"};
+    //     return {};
+    // };
+
+    auto res = wrapFlowAsStable<std::string>(get_flow_preds, get_conflicts);
+
+    auto empty = std::vector<std::vector<std::string>>{{}};
+    EXPECT_EQ(res("A"), empty);
+    EXPECT_EQ(res("B"), empty);
+    EXPECT_EQ(res("C"), empty);
+    EXPECT_EQ(res("D"), empty);
+
+    std::vector<std::vector<std::string>> E_enabling_sets = 
+    {
+        {"A", "C", "D"},
+        {"B", "D"}
+    };
+
+    EXPECT_THAT(res("E"), testing::UnorderedElementsAreArray(E_enabling_sets));
 }

@@ -5,11 +5,11 @@
 #include <set>
 #include <map>
 #include <tuple> // For std::pair in dfs_stack
-#include "FiniteES/ConfigurationChecker.h"
-#include "FiniteES/PrimeKhanTracker.h"
-#include "FiniteES/StableKhanTracker.h"
-#include "FiniteES/BundleKhanTracker.h"
-#include "FiniteES/TraceGenerator.h"
+#include "ConfigurationChecker.h"
+#include "FiniteES/PrimeKhanDFSTracker.h"
+#include "FiniteES/StableKhanDFSTracker.h"
+#include "FiniteES/BundleKhanDFSTracker.h"
+#include "FiniteES/DFSTraceGenerator.h"
 
 TEST(ConfigurationCheckerPrimeTest, IsConfigurationChecksPrimeES) {
     // Nodes: {1, 2, 3, 4, 5}
@@ -30,7 +30,7 @@ TEST(ConfigurationCheckerPrimeTest, IsConfigurationChecksPrimeES) {
     };
 
     auto trackerFactory = getPrimeKhanTrackerFactory(get_prime_predecessors_global, get_prime_conflicts_global);
-    auto trace_gen_factory = getKhanTraceGenFactory(trackerFactory);
+    auto trace_gen_factory = getDFSTraceGenFactory(trackerFactory);
 
     // Test Cases
     // PES: 1->3, 2->3, 3->5; 1#4, 2#4
@@ -75,7 +75,7 @@ TEST(ConfigurationCheckerStableTest, IsConfigurationChecksStableES) {
     };
 
     auto trackerFactory = getStableKhanTrackerFactory(get_stable_histories, get_stable_conflicts);
-    auto trace_gen_factory = getKhanTraceGenFactory(trackerFactory);
+    auto trace_gen_factory = getDFSTraceGenFactory(trackerFactory);
 
     EXPECT_TRUE(isConfiguration(std::vector<int>({}), trace_gen_factory).is_config);
     // --- Valid configurations ---
@@ -124,7 +124,7 @@ TEST(ConfigurationCheckerBundleTest, IsConfigurationChecksBundleES) {
     };
 
     auto trackerFactory = getBundleKhanTrackerFactory(get_bundles, get_conflicts);
-    auto trace_gen_factory = getKhanTraceGenFactory(trackerFactory);
+    auto trace_gen_factory = getDFSTraceGenFactory(trackerFactory);
 
     // --- Valid configurations ---
     EXPECT_TRUE(isConfiguration(std::vector<int>({}), trace_gen_factory).is_config);
@@ -159,7 +159,7 @@ TEST(ConfigurationCheckerBundleTest, IsConfigurationChecksExtendedBundleES) {
     };
 
     auto trackerFactory = getBundleKhanTrackerFactory(get_bundles, inhibited_by);
-    auto trace_gen_factory = getKhanTraceGenFactory(trackerFactory);
+    auto trace_gen_factory = getDFSTraceGenFactory(trackerFactory);
 
     // --- Valid configurations ---
     EXPECT_TRUE(isConfiguration<true>(std::vector<int>({}), trace_gen_factory).is_config);

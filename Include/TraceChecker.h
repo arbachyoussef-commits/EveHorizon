@@ -3,7 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include <optional>
-#include "KhanConcepts.h"
+#include "EveHorizonConcepts.h"
 
 template <class Event>
 struct TraceCheckResult {
@@ -26,9 +26,9 @@ struct TraceCheckResult {
  * The function simulates the firing of events in the given sequence, checking at each step if the next event is enabled according to the tracker's logic. 
  * In other words, every event of the sequence must be enabled after pushing the previous events in the sequence. If such an event is found the function returns false with the first invalid event. If the function successfully simulates the firing of all events in the sequence without finding any invalid event, it returns true.
  */
-template <typename EventSeq, typename TrackerFactory>
-requires KhanTrackerFactory<TrackerFactory, EventSeq>
-auto isTrace(const EventSeq& sequence, TrackerFactory&& tracker_factory) {
+template <typename EventSeq, typename TrackerFactoryKhan>
+requires KhanTrackerFactory<TrackerFactoryKhan, EventSeq>
+auto isTrace(const EventSeq& sequence, TrackerFactoryKhan&& tracker_factory) {
     using Event = std::ranges::range_value_t<EventSeq>;
 
     auto tracker = tracker_factory(sequence);

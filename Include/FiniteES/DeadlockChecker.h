@@ -4,7 +4,9 @@
 #include <algorithm>
 #include <set>
 #include <ranges>
-#include "TraceGenerator.h"
+#include "DFSTraceGenerator.h"
+#include "EveHorizonConcepts.h"
+
 
 /**
  * Checks if a maximal trace is "complete".
@@ -13,6 +15,7 @@
  * 2. Been inhibited/conflicted by something that fired.
  */
 template <std::ranges::random_access_range SortedTrace, std::ranges::input_range EventSet, class GetInhibitors>
+requires EventRangeGetter<GetInhibitors, std::ranges::range_value_t<EventSet>>
 bool isComplete(const SortedTrace& sorted_trace, const EventSet& allEvents, const GetInhibitors& get_inhibitors) {
     
     return std::ranges::all_of(allEvents, [&sorted_trace, &get_inhibitors](const auto& e) {
@@ -47,14 +50,15 @@ struct DeadlockCheckResult{
  * Returns false with a counterexample trace iff it finds a maximal trace that is not complete, which demonstrates the presence of a deadlock in the system.
  * The function relies on the correctness of the trace generator and the completeness check.
  */
-template <typename TrackerFactory, std::ranges::forward_range EventSet>
-requires KhanTrackerFactory<TrackerFactory, EventSet>
-auto isDeadlockFree(const EventSet& allEvents, const TrackerFactory& trackerFactory, const auto& get_inhibitors) {
+template <std::ranges::forward_range EventSet, typename TrackerFactory, typename GetInhibitors>
+requires EventRangeGetter<GetInhibitors, std::ranges::range_value_t<EventSet>> &&
+         KhanTrackerFactory<TrackerFactory, EventSet>
+auto isDeadlockFree(const EventSet& allEvents, const TrackerFactory& trackerFactory, const GetInhibitors& get_inhibitors) {
 
     using Event = std::ranges::range_value_t<EventSet>;
 
     // 1. Launch the DFS Generator
-    auto traceEngine = getKhanTraceGenFactory(trackerFactory)(allEvents);
+    auto traceEngine = getDFSTraceGenFactory(trackerFactory)(allEvents);
     auto gen = traceEngine();
 
     // 2. Either the trace is not maximal, or it is complete

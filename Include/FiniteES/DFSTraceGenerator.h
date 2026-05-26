@@ -3,7 +3,7 @@
 #include <functional>
 #include <coroutine>
 #include <vector>
-#include "KhanConcepts.h"
+#include "EveHorizonConcepts.h"
 
 template<typename Node>
 struct TraceResult {
@@ -56,7 +56,7 @@ struct TraceGenerator {
  */
 template <std::ranges::forward_range EventSet, class TrackerFactory>
 requires KhanTrackerFactory<TrackerFactory, EventSet>
-struct TraceEngineKhan{
+struct DFSTraceGenEngine{
     using Event = std::ranges::range_value_t<EventSet>;
     using TrackerType = std::invoke_result_t<TrackerFactory, EventSet>;
 
@@ -64,7 +64,7 @@ struct TraceEngineKhan{
     TrackerType tracker;
     std::vector<Event> currentPath;
 
-    TraceEngineKhan(EventSet&& events, const TrackerFactory& trackerFactory)
+    DFSTraceGenEngine(EventSet&& events, const TrackerFactory& trackerFactory)
         : events(events), tracker(trackerFactory(events)) {}
 
     TraceGenerator<TraceResult<Event>> operator()() & {
@@ -97,8 +97,8 @@ struct TraceEngineKhan{
 };
 
 template <class TrackerFactory>
-auto getKhanTraceGenFactory(TrackerFactory trackerFactory) {
+auto getDFSTraceGenFactory(TrackerFactory trackerFactory) {
     return [trackerFactory](auto&& events) {
-        return TraceEngineKhan<decltype(events), TrackerFactory>(std::forward<decltype(events)>(events), trackerFactory);
+        return DFSTraceGenEngine<decltype(events), TrackerFactory>(std::forward<decltype(events)>(events), trackerFactory);
     };  
 }

@@ -4,6 +4,8 @@
 #include <vector>
 #include <memory>
 #include <functional>
+#include "EveHorizonConcepts.h"
+
 
 /**
  * StableKhanTracker is a state tracker used for Khan's algorithm of generating traces specific to Stable Event Structures, which have a more complex enabling condition than Prime ES. In a Stable ES, an event can be enabled by multiple "enabling sets" of events, where each set is an AND-set of events (i.e., all events in the set must have fired for that set to be satisfied), and the overall enabling condition is an OR over those sets (i.e., at least one enabling set must be satisfied for the event to be enabled).
@@ -13,8 +15,13 @@
  * The tracker also handles conflicts by keeping a count of how many conflicting events have fired for each event, and an event is not enabled if it has any active conflicts.
  * Note: this tracker does not check the stability condition of the event structure (i.e., that no two enabling sets of the same event can be satisfied at the same time), as it assumes that the input event structure is already a valid Stable ES. It simply implements the enabling and conflict logic according to the definition of Stable ES.
  */
-template <typename Event>
-class StableKhanTracker {
+template <std::ranges::input_range EventSet, typename EnablersGetter, typename ConflictGetter>
+requires NestedEventRangeGetter<EnablersGetter, std::ranges::range_value_t<EventSet>> &&
+         EventRangeGetter<ConflictGetter, std::ranges::range_value_t<EventSet>>
+class StableKhanDFSTracker {
+
+    using Event = std::ranges::range_value_t<EventSet>;
+
     struct EnablingSet {
         Event target;
         std::size_t remaining; // How many nodes in this AND-set still need to fire
@@ -30,10 +37,10 @@ class StableKhanTracker {
 
     std::unordered_map<Event, NodeState> registry;
     std::vector<EnablingSet> all_sets;
-    std::function<std::vector<Event>(const Event&)> get_conflicts;
+    ConflictGetter get_conflicts;
 
 public:
-    StableKhanTracker(const auto& events, auto&& get_enablers, auto&& get_conf) : get_conflicts(std::forward<decltype(get_conf)>(get_conf)) {
+    StableKhanDFSTracker(const EventSet& events, EnablersGetter get_enablers, ConflictGetter get_conf) : get_conflicts(get_conf) {
         for (const auto& e : events) {
             for (auto& set : get_enablers(e)) {
                 auto& s = all_sets.emplace_back(e, set.size(), set.size());
@@ -78,7 +85,6 @@ public:
 
 auto getStableKhanTrackerFactory(auto get_enablers, auto get_confs) {
     return [get_enablers, get_confs](const auto& events) {
-        using Event = std::ranges::range_value_t<decltype(events)>;
-        return StableKhanTracker<Event>(events, get_enablers, get_confs);
+        return StableKhanDFSTracker(events, get_enablers, get_confs);
     };
 }

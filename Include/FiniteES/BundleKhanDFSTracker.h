@@ -4,6 +4,8 @@
 #include <unordered_map>
 #include <memory>
 #include <functional>
+#include "EveHorizonConcepts.h"
+
 
 /**
  * BundleKhanTracker is a state tracker used for Khan's algorithm of generating traces specific to Bundle Event Structures, which have a more complex enabling condition than Prime or Stable ES. In a Bundle ES, an event can be enabled by multiple "bundles" of events, where each bundle is an OR-set of events (i.e., at least one event from the bundle must have fired). 
@@ -11,8 +13,12 @@
  * The BundleKhanTracker maintains the state of which events have fired, how many bundles for each event have been satisfied, and how many conflicts are currently active for each event. This allows it to efficiently determine which events are currently enabled and to update the state when events are fired or retracted.
  * This tracker can be used to explore traces of a sub-set of events (say a configuration), or the whole set of events.
  */
-template <typename Event>
-class BundleKhanTracker {
+template <std::ranges::input_range EventSet, typename BundleGetter, typename InhibitorGetter>
+requires NestedEventRangeGetter<BundleGetter, std::ranges::range_value_t<EventSet>> &&
+         EventRangeGetter<InhibitorGetter, std::ranges::range_value_t<EventSet>>
+class BundleKhanDFSTracker {
+
+    using Event = std::ranges::range_value_t<EventSet>;
 
     struct Bundle {
         Event target;
@@ -22,14 +28,14 @@ class BundleKhanTracker {
     struct NodeState {
         std::size_t satisfied_bundles = 0;
         std::size_t required_bundles = 0;
-        std::size_t inhibitor_count = 0; // For Extended: used for inhibitors
+        std::size_t inhibitor_count = 0; // For Extended: used for inhibitors. For Bundle ESs, it is the conflicts
         bool fired = false;
         std::vector<std::size_t> bundles_i_belong_to;   //indexes to all_bundles
     };
 
     std::unordered_map<Event, NodeState> registry;
     std::vector<Bundle> all_bundles;
-    std::function<std::vector<Event>(const Event&)> inhibited_by;
+    InhibitorGetter inhibited_by;
 
 public:
     /**
@@ -43,7 +49,7 @@ public:
      * This design allows for flexibility in exploring different subsets of the event structure (e.g., configurations) while still correctly handling the enabling and conflict logic that may involve events outside of that subset.
      * Note: the tracker does not check the validity of the input (e.g., that the events of the one bundle are in conflict), as it assumes that the input is already a valid representation of a Bundle ES. It simply implements the enabling and conflict logic according to the definition of Bundle ES.
      */
-    BundleKhanTracker(const auto& events, auto&& get_bundles, auto&& get_inhibited_by) : inhibited_by(std::forward<decltype(get_inhibited_by)>(get_inhibited_by)) {
+    BundleKhanDFSTracker(const EventSet& events, BundleGetter get_bundles, InhibitorGetter get_inhibited_by) : inhibited_by(get_inhibited_by) {
         for (const auto& e : events) {
             auto bundles = get_bundles(e);
             registry[e].required_bundles = bundles.size();
@@ -93,7 +99,6 @@ public:
 template <class BundleGetter, class InhibitorGetter>
 auto getBundleKhanTrackerFactory(BundleGetter&& get_bundles, InhibitorGetter&& get_inhibited_by) {
     return [get_bundles = std::forward<BundleGetter>(get_bundles), get_inhibited_by = std::forward<InhibitorGetter>(get_inhibited_by)](const auto& nodes) {
-        using Event = std::ranges::range_value_t<decltype(nodes)>;
-        return BundleKhanTracker<Event>(nodes, get_bundles, get_inhibited_by);
+        return BundleKhanDFSTracker(nodes, get_bundles, get_inhibited_by);
     };
 }

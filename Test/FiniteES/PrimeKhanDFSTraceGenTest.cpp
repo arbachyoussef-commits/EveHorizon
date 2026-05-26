@@ -2,8 +2,8 @@
 #include <gmock/gmock.h>
 #include <string>
 #include <vector>
-#include "FiniteES/PrimeKhanTracker.h"
-#include "FiniteES/TraceGenerator.h"
+#include "FiniteES/PrimeKhanDFSTracker.h"
+#include "FiniteES/DFSTraceGenerator.h"
 
 using testing::UnorderedElementsAreArray;
 
@@ -17,7 +17,7 @@ TEST(PrimeKhanTrackerTest, EnablementPushPopTransitions) {
         return {};
     };
 
-    PrimeKhanTracker<std::string> tracker(events, pred, conflicts);
+    PrimeKhanDFSTracker tracker(events, pred, conflicts);
 
     EXPECT_TRUE(tracker.is_enabled("A"));
     EXPECT_FALSE(tracker.is_enabled("B"));
@@ -43,7 +43,7 @@ TEST(PrimeKhanTrackerTest, EnablementPushPopTransitionsWorksWithSubsets) {
         return {};
     };
 
-    PrimeKhanTracker<std::string> tracker(events, pred, conflicts),
+    PrimeKhanDFSTracker tracker(events, pred, conflicts),
     trackerBC(std::vector<std::string>{"B", "C"}, pred, conflicts);
 
     EXPECT_EQ(tracker.is_enabled("B"), trackerBC.is_enabled("B"));
@@ -78,7 +78,7 @@ TEST(PrimeKhanTraceExplorerTest, ComplexCausalityAndConflictProducesExpectedTrac
     };
 
     auto trackerFactory = getPrimeKhanTrackerFactory(pred, conflicts);
-    auto engine = getKhanTraceGenFactory(trackerFactory)(events);
+    auto engine = getDFSTraceGenFactory(trackerFactory)(events);
     auto generator = engine();
 
     std::vector<std::vector<std::string>> maximalTraces, traces;

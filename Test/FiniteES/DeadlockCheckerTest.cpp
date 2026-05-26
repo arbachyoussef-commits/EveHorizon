@@ -2,8 +2,8 @@
 #include <gmock/gmock.h>
 #include <vector>
 
-#include "FiniteES/BundleKhanTracker.h"
-#include "FiniteES/StableKhanTracker.h"
+#include "FiniteES/BundleKhanDFSTracker.h"
+#include "FiniteES/StableKhanDFSTracker.h"
 #include "FiniteES/DeadlockChecker.h"
 
 TEST(DeadlockCheckerStableTest, RecognizesDeadlockFreeStableStructure) {

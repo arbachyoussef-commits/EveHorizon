@@ -3,8 +3,8 @@
 #include <vector>
 #include <algorithm>
 #include <cassert>
-#include "FiniteES/BundleKhanTracker.h"
-#include "FiniteES/TraceChecker.h"
+#include "FiniteES/BundleKhanDFSTracker.h"
+#include "TraceChecker.h"
 
 TEST(BundleTraceExplorerTest, ProducesExpectedBundleTraces) {
     std::vector<std::string> events = {"e1","e2","e3","e4"};

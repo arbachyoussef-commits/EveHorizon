@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 
-#include "FiniteES/TraceGenerator.h"
-#include "FiniteES/StableKhanTracker.h"
+#include "FiniteES/DFSTraceGenerator.h"
+#include "FiniteES/StableKhanDFSTracker.h"
 
 using ::testing::UnorderedElementsAreArray;
 
@@ -31,7 +31,7 @@ TEST(StableKhanTrackerTest, EnablingAndConflictSemantics) {
         return {};
     };
 
-    StableKhanTracker<std::string> tracker(events, get_enablers, get_conflicts);
+    StableKhanDFSTracker tracker(events, get_enablers, get_conflicts);
 
     EXPECT_TRUE(tracker.is_enabled("R1"));
     EXPECT_TRUE(tracker.is_enabled("R2"));
@@ -81,7 +81,7 @@ TEST(StableKhanTraceExplorerTest, ProducesExpectedStableTraces) {
     };
 
     auto trackerFactory = getStableKhanTrackerFactory(get_enablers, get_conflicts);
-    auto engine = getKhanTraceGenFactory(trackerFactory)(events);
+    auto engine = getDFSTraceGenFactory(trackerFactory)(events);
     auto generator = engine();
 
     std::vector<std::vector<std::string>> maximalTraces, traces;
