@@ -9,7 +9,7 @@
  * C++20 Concept defining the mandatory interface for a Kahn-style tracker used for the trace generator.
  */
 template <typename Tracker, typename Event>
-concept KahnTracker = requires(Tracker t, const Tracker ct, const Event &e) {
+concept DFSTracker = requires(Tracker t, const Tracker ct, const Event &e) {
     // 1. Enforce push and pop state-mutation capabilities
     { t.push(e) } -> std::same_as<void>;
     { t.pop(e) } -> std::same_as<void>;
@@ -25,7 +25,38 @@ concept KahnTracker = requires(Tracker t, const Tracker ct, const Event &e) {
  * @tparam EventRange A valid forward range containing your events/nodes.
  */
 template <typename Factory, typename EventRange>
-concept KahnTrackerFactory = KahnTracker<std::invoke_result_t<Factory, EventRange>, std::ranges::range_value_t<EventRange>>;
+concept DFSTrackerFactory = DFSTracker<std::invoke_result_t<Factory, EventRange>, std::ranges::range_value_t<EventRange>>;
+
+/**
+ * A trace limiter is called with the current trace and returns a boolean-like
+ * value. Returning true asks the DFS explorer to prune that prefix.
+ *
+ * @tparam Predicate A callable limiter.
+ * @tparam Trace The trace container passed to the limiter.
+ */
+template <typename Predicate, typename Trace>
+concept TraceLimitPredicate = std::predicate<Predicate &, const Trace &>;
+
+/**
+ * Interface for a generative DFS tracker: firing returns newly enabled events,
+ * and pop restores tracker state during backtracking.
+ */
+template <typename Tracker, typename Event>
+concept GenerativeDFSTracker = requires(Tracker tracker, const Tracker constTracker, const Event &event) {
+    { constTracker.is_enabled(event) } -> std::convertible_to<bool>;
+    { tracker.push(event) };
+    requires std::ranges::range<decltype(tracker.push(event))>;
+    requires std::same_as<std::ranges::range_value_t<decltype(tracker.push(event))>, Event>;
+    { tracker.pop(event) } -> std::same_as<void>;
+};
+
+template <typename Factory, typename EventRange>
+concept GenerativeDFSTrackerFactory = std::ranges::input_range<EventRange> &&
+    requires(Factory factory, const EventRange &events) {
+        requires GenerativeDFSTracker<
+            decltype(factory(events)),
+            std::ranges::range_value_t<EventRange>>;
+    };
 
 // ============================================================================
 // RANGE POLICY TRAITS (Standard-Compliant Enforcers)
@@ -146,3 +177,4 @@ concept BFSTracker =
 
         requires std::same_as<std::ranges::range_value_t<std::invoke_result_t<decltype(&Tracker::fire_and_propagate), Tracker *, const Node &>>, Node>;
     };
+

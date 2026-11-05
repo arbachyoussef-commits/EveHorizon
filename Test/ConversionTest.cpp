@@ -398,3 +398,4 @@ TEST(FlowToStableConversionTest, FourEventMaskingDiamond) {
 
     EXPECT_THAT(res("E"), testing::UnorderedElementsAreArray(E_enabling_sets));
 }
+ 

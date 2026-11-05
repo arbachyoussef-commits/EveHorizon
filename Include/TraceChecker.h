@@ -30,7 +30,7 @@ struct TraceCheckResult
  * In other words, every event of the sequence must be enabled after pushing the previous events in the sequence. If such an event is found the function returns false with the first invalid event. If the function successfully simulates the firing of all events in the sequence without finding any invalid event, it returns true.
  */
 template <typename EventSeq, typename TrackerFactoryKahn>
-    requires KahnTrackerFactory<TrackerFactoryKahn, EventSeq>
+    requires DFSTrackerFactory<TrackerFactoryKahn, EventSeq>
 auto isTrace(const EventSeq &sequence, TrackerFactoryKahn &&tracker_factory)
 {
     using Event = std::ranges::range_value_t<EventSeq>;

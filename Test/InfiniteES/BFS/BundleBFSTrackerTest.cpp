@@ -2,8 +2,9 @@
 #include <gmock/gmock.h>
 #include <string>
 #include <vector>
-#include "InfiniteES/BFSTraceGenerator.h"
-#include "InfiniteES/BundleBFSTracker.h"
+#include "InfiniteES/BFS/BFSTraceGenerator.h"
+#include "InfiniteES/BFS/BundleBFSTracker.h"
+#include "BFSTraceOrderAssertions.h"
 
 using namespace testing;
 
@@ -267,6 +268,7 @@ TEST(BundleBfsTraceExplorerTest, ProducesExpectedBundleTraces)
         {"e3", "e1", "e4"},
     };
     ASSERT_THAT(traces, UnorderedElementsAreArray(expected));
+    EXPECT_TRUE(has_breadth_first_trace_order(traces));
 }
 
 TEST(BundleBfsTraceExplorerTest, ProducesExpectedExtendedBundleTraces)
@@ -330,4 +332,5 @@ TEST(BundleBfsTraceExplorerTest, ProducesExpectedExtendedBundleTraces)
     }
 
     ASSERT_THAT(traces, UnorderedElementsAreArray(expected));
+    EXPECT_TRUE(has_breadth_first_trace_order(traces));
 }

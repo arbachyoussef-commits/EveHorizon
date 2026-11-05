@@ -55,7 +55,7 @@ struct DeadlockCheckResult
  */
 template <std::ranges::forward_range EventSet, typename TrackerFactory, typename GetInhibitors>
     requires EventRangeGetter<GetInhibitors, std::ranges::range_value_t<EventSet>> &&
-             KahnTrackerFactory<TrackerFactory, EventSet>
+             DFSTrackerFactory<TrackerFactory, EventSet>
 auto isDeadlockFree(const EventSet &allEvents, const TrackerFactory &trackerFactory, const GetInhibitors &get_inhibitors)
 {
 

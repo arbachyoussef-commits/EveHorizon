@@ -2,8 +2,9 @@
 #include <gmock/gmock.h>
 #include <string>
 #include <vector>
-#include "InfiniteES/BFSTraceGenerator.h"
-#include "InfiniteES/PrimeBFSTracker.h"
+#include "InfiniteES/BFS/BFSTraceGenerator.h"
+#include "InfiniteES/BFS/PrimeBFSTracker.h"
+#include "BFSTraceOrderAssertions.h"
 
 using namespace testing;
 
@@ -45,5 +46,9 @@ TEST(PrimeBfsTraceExplorerTest, SmokeTest)
 
     auto expected = std::vector<std::vector<std::string>>{
         {}, {"e1"}, {"e2"}, {"e4"}, {"e2", "e4"}, {"e4", "e2"}, {"e1", "e2"}, {"e2", "e1"}, {"e1", "e2", "e3"}, {"e2", "e1", "e3"}};
+    
+    //Assure all expected traces are generated
     ASSERT_THAT(traces, UnorderedElementsAreArray(expected));
+    EXPECT_TRUE(has_breadth_first_trace_order(traces));
 }
+ 

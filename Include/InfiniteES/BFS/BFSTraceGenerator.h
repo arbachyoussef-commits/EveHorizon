@@ -9,41 +9,7 @@
 #include <memory>
 #include <algorithm>
 #include "EveHorizonConcepts.h"
-
-template <typename Node>
-struct TraceGenerator
-{
-    struct promise_type
-    {
-        const std::vector<Node> *current_value = nullptr;
-        auto get_return_object() { return TraceGenerator{handle_type::from_promise(*this)}; }
-        auto initial_suspend() { return std::suspend_always{}; }
-        auto final_suspend() noexcept { return std::suspend_always{}; }
-        void unhandled_exception() { std::terminate(); }
-        auto yield_value(std::vector<Node> &value)
-        {
-            current_value = &value;
-            return std::suspend_always{};
-        }
-        void return_void() {}
-    };
-    using handle_type = std::coroutine_handle<promise_type>;
-    handle_type h;
-    TraceGenerator(handle_type h) : h(h) {}
-    ~TraceGenerator()
-    {
-        if (h)
-            h.destroy();
-    }
-    bool next()
-    {
-        if (!h)
-            return false;
-        h.resume();
-        return !h.done();
-    }
-    const std::vector<Node> &get_value() { return *h.promise().current_value; }
-};
+#include "InfiniteES/Util.h"
 
 template <typename Node>
 struct PathNode

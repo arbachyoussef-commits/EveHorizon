@@ -2,6 +2,7 @@
 #include <gmock/gmock.h>
 #include <string>
 #include <vector>
+#include <array>
 #include "FiniteES/DFSTraceGenerator.h"
 #include "FiniteES/BundleKahnDFSTracker.h"
 

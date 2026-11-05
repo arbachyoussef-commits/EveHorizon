@@ -69,7 +69,7 @@ struct TraceGenerator
  * The maximality check is integrated into the generator, allowing the caller to easily distinguish between maximal traces (which are prefixes of no other traces). This is useful for various applications, such as configuration checking and deadlock-freeness.
  */
 template <std::ranges::forward_range EventSet, class TrackerFactory>
-    requires KahnTrackerFactory<TrackerFactory, EventSet>
+    requires DFSTrackerFactory<TrackerFactory, EventSet>
 struct DFSTraceGenEngine
 {
     using Event = std::ranges::range_value_t<EventSet>;

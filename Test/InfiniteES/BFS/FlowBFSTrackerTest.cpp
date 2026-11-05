@@ -2,8 +2,9 @@
 #include <gmock/gmock.h>
 #include <string>
 #include <vector>
-#include "InfiniteES/BFSTraceGenerator.h"
-#include "InfiniteES/FlowBFSTracker.h"
+#include "InfiniteES/BFS/BFSTraceGenerator.h"
+#include "InfiniteES/BFS/FlowBFSTracker.h"
+#include "BFSTraceOrderAssertions.h"
 
 using namespace testing;
 
@@ -448,4 +449,5 @@ TEST(FlowBfsTraceExplorerTest, ProducesExpectedFlowTraces)
     auto expected = std::vector<std::vector<std::string>>{
         {}, {"a"}, {"b"}, {"c"}, {"a", "c"}, {"c", "a"}, {"b", "e"}, {"a", "c", "e"}, {"c", "a", "e"}};
     ASSERT_THAT(traces, UnorderedElementsAreArray(expected));
+    EXPECT_TRUE(has_breadth_first_trace_order(traces));
 }

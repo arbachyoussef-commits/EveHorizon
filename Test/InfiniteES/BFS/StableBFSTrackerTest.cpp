@@ -3,8 +3,9 @@
 #include <gmock/gmock.h>
 #include <string>
 #include <vector>
-#include "InfiniteES/BFSTraceGenerator.h"
-#include "InfiniteES/StableBFSTracker.h"
+#include "InfiniteES/BFS/BFSTraceGenerator.h"
+#include "InfiniteES/BFS/StableBFSTracker.h"
+#include "BFSTraceOrderAssertions.h"
 
 using testing::UnorderedElementsAreArray;
 
@@ -273,4 +274,5 @@ TEST(StableBfsTraceExplorerTest, ProducesExpectedStableTraces)
     auto expected = std::vector<std::vector<int>>{
         {}, {1}, {2}, {4}, {1, 3}, {2, 3}, {1, 4}, {4, 1}, {2, 4}, {4, 2}};
     ASSERT_THAT(traces, UnorderedElementsAreArray(expected));
+    EXPECT_TRUE(has_breadth_first_trace_order(traces));
 }
